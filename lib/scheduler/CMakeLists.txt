@@ -32,6 +32,8 @@ set(SOURCES
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
         policy/scheduler_time_qos.cpp
+        policy/scheduler_time_pfp.cpp
+        policy/scheduler_time_pfp.h
         pucch_scheduling/pucch_allocator_impl.cpp
         pucch_scheduling/pucch_resource_manager.cpp
         uci_scheduling/uci_scheduler_impl.cpp

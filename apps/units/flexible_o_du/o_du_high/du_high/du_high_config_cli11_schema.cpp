@@ -35,6 +35,7 @@
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/format/fmt_to_c_str.h"
+#include <sstream>  // dùng stringstream cho --lcid-prio
 
 using namespace srsran;
 
@@ -630,6 +631,56 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App&              
     if (rr_sched_sub_cmd->count() != 0) {
       expert_params = time_rr_scheduler_expert_config{};
     }
+  });
+  // ===== PFP (Preemptive Fixed Priority) =====
+  static time_pfp_scheduler_expert_config pfp_sched_expert_cfg;
+  CLI::App* pfp_sched_cfg_subcmd =
+      add_subcommand(app, "pfp_sched", "Preemptive Fixed Priority policy scheduler configuration")->configurable();
+
+  // --default-prio <0..255> (0 = ưu tiên cao nhất)
+  uint16_t pfp_default_prio_cli = pfp_sched_expert_cfg.default_prio;
+  pfp_sched_cfg_subcmd->add_option("--default-prio", pfp_default_prio_cli,
+                                   "Default fixed priority for all LCIDs (0 highest)")->check(CLI::Range(0, 255));
+
+  // --lcid-prio "1:0,4:1,5:3" (danh sách cặp LCID:prio)
+  std::string lcid_prio_kv_cli;
+  pfp_sched_cfg_subcmd->add_option("--lcid-prio", lcid_prio_kv_cli,
+                                   "Comma-separated LCID:prio pairs, e.g. \"1:0,4:1,5:3\"");
+
+  // Xác nhận khi subcommand được gọi
+  pfp_sched_cfg_subcmd->parse_complete_callback([&]() {
+    CLI::App* sub = app.get_subcommand("pfp_sched");
+    if (sub->count() == 0) {
+      return;
+    }
+
+    // Gán default_prio
+    pfp_sched_expert_cfg.default_prio = static_cast<uint8_t>(pfp_default_prio_cli);
+    pfp_sched_expert_cfg.lcid_prio.fill(pfp_sched_expert_cfg.default_prio);
+
+    // Parse --lcid-prio nếu có
+    if (!lcid_prio_kv_cli.empty()) {
+      // format: "1:0,4:1,5:3"
+      std::stringstream ss(lcid_prio_kv_cli);
+      std::string pair;
+      while (std::getline(ss, pair, ',')) {
+        auto pos = pair.find(':');
+        if (pos == std::string::npos) {
+          throw CLI::ValidationError("pfp_sched", "Invalid LCID:prio pair: " + pair);
+        }
+        auto lcid_str = pair.substr(0, pos);
+        auto prio_str = pair.substr(pos + 1);
+        unsigned lcid = std::stoul(lcid_str);
+        unsigned prio = std::stoul(prio_str);
+        if (lcid > 255 || prio > 255) {
+          throw CLI::ValidationError("pfp_sched", "LCID or prio out of range (0..255) in: " + pair);
+        }
+        pfp_sched_expert_cfg.lcid_prio[static_cast<uint8_t>(lcid)] = static_cast<uint8_t>(prio);
+      }
+    }
+
+    // Trả vào variant
+    expert_params = pfp_sched_expert_cfg;
   });
 }
 

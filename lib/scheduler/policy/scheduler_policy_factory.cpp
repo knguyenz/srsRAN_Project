@@ -19,7 +19,7 @@
  * and at http://www.gnu.org/licenses/.
  *
  */
-
+#include "scheduler_time_pfp.h"
 #include "scheduler_policy_factory.h"
 #include "scheduler_time_qos.h"
 #include "scheduler_time_rr.h"
@@ -34,6 +34,9 @@ std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const schedu
   }
   if (std::holds_alternative<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
     return std::make_unique<scheduler_time_qos>(expert_cfg_, cell_index);
+  }
+  if (std::holds_alternative<time_pfp_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
+    return std::make_unique<scheduler_time_pfp>(expert_cfg_, cell_index);
   }
   return nullptr;
 }

@@ -37,6 +37,7 @@
 #include <chrono>
 #include <variant>
 #include <vector>
+#include <array>
 
 namespace srsran {
 
@@ -66,8 +67,18 @@ struct time_qos_scheduler_expert_config {
 /// \brief Round-Robin policy scheduler expert parameters.
 struct time_rr_scheduler_expert_config {};
 
+struct time_pfp_scheduler_expert_config {
+  // 0 = cao nhất; số càng nhỏ → ưu tiên càng mạnh
+  uint8_t default_prio = 7;
+
+  // Ánh xạ LCID -> fixed priority (0..255).
+  std::array<uint8_t, 256> lcid_prio{};
+
+  time_pfp_scheduler_expert_config() { lcid_prio.fill(default_prio); }
+};
+
 /// \brief Policy scheduler expert parameters.
-using policy_scheduler_expert_config = std::variant<time_qos_scheduler_expert_config, time_rr_scheduler_expert_config>;
+using policy_scheduler_expert_config = std::variant<time_qos_scheduler_expert_config, time_rr_scheduler_expert_config,  time_pfp_scheduler_expert_config >;
 
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
