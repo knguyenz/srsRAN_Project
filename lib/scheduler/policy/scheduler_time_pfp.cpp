@@ -7,7 +7,8 @@ using namespace srsran;
 static inline double invert_fixed(uint8_t fixed_prio)
 {
   // LC prio nhỏ → đảo thành số lớn để pipeline ưu tiên trước.
-  return scheduler_time_pfp::prio_base - static_cast<double>(fixed_prio);
+  constexpr double kPrioBase = 1000.0;
+  return kPrioBase - static_cast<double>(fixed_prio);
 }
 
 scheduler_time_pfp::scheduler_time_pfp(const scheduler_ue_expert_config& expert_cfg_,
